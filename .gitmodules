@@ -3,4 +3,4 @@
 	url = https://github.com/socheatos/google-street-view-panorama-download
 [submodule "models/maskrcnn"]
 	path = models/maskrcnn
-	url = https://github.com/matterport/Mask_RCNN.git
+	url = git@github.com:socheatos/Mask_RCNN.git
