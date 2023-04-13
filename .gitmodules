@@ -1,3 +1,6 @@
 [submodule "src/data/gsv-panorama-download"]
 	path = src/data/gsv-panorama-download
 	url = https://github.com/socheatos/google-street-view-panorama-download
+[submodule "models/maskrcnn"]
+	path = models/maskrcnn
+	url = https://github.com/matterport/Mask_RCNN.git
