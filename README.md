@@ -1,7 +1,9 @@
-ConfigWithYourProjectName
+Project Sidewalk
 ==============================
 
-Final Project for CSCI19109-S23 Please fill in Description
+Final Project for CSCI19109-S23 
+
+We are performing image segmentation on street view images to extract sidewalk location and information.  We then hope to allow the system to assess the accessibility of the sidewalks and check for obstructions or deterioration.
 
 Project Organization
 ------------
