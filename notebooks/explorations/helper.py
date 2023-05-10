@@ -75,20 +75,46 @@ def getInstances(filename:str, labelsToKeep:dict):
             labels += str(labelsToKeep[l])+' '
     return labels
 
-def getLabels(ids, y_directory,keepLabels=keeplabels):
+def getLabels(ids, y_directory,keepLabels=keeplabels, road=False):
     labels = []
+    if road:
+        keeplabels['road']=7
     for id in ids:
         lb_path = os.path.join(y_directory, id+'.json')
         labels.append(getInstances(lb_path,keepLabels))
     return labels
 
-def generateCSV(filepath:str, ids, labels):
-    df = pd.DataFrame(data=list(zip(ids, labels)),columns=['ID','LABEL'])
+def generateCSV(filepath:str, ids, labels,obstruction_label=None):
+    if obstruction_label:
+        row = zip(ids,labels,obstruction_label)
+        cols = ['ID','LABEL','OBSTRUCTION']
+    row = zip(ids,labels)
+    cols = ['ID','LABEL']
+    df = pd.DataFrame(data=list(row),columns=cols)
     df.to_csv(filepath, index=False)
 
+def retrieve_camera(filename):
+    '''returns baseline and focal length of camera calibration files'''
+    with open(filename) as f:
+        data = json.load(f)
+        return data['extrinsic']['baseline'], data['intrinsic']['fx']
+    
+def disparity_value(d):
+    d[d > 0] = (d[d > 0] - 1) / 256
+    return d
 
-def parse_json(filename: str, keep=keeplabels, return_labels = False, int_labels=False, resize:tuple =None):
+def calculate_depth(disparity, baseline, focal_length):
+    disparity = disparity_value(disparity)
+    mask = (disparity!=0)
+    depth = np.empty_like(disparity)
+    depth[mask] = (baseline*focal_length)/disparity[mask]
+    depth[~mask] = 0
+    return depth
+
+def parse_json(filename: str, keep=keeplabels, return_labels = False, int_labels=False, resize:tuple =None, road=False):
     polygons = []
+    if road:
+        keeplabels['road']=7
     if return_labels:
         label_n_polygons = {}
     with open(filename) as f:
@@ -152,9 +178,9 @@ def draw_flat_mask(img, polygons):
         else:
             draw_instance_Mask(img, poly)
 
-def stack_mask(id, data,resize:tuple=None,dir=LBL_DIR):
+def stack_mask(id, data,resize:tuple=None,dir=LBL_DIR, road=False):
     labels = data[id]
-    im_dim,polygons = parse_json(dir+f'/{id}.json', return_labels=True, int_labels=True, resize=resize)
+    im_dim,polygons = parse_json(dir+f'/{id}.json', return_labels=True, int_labels=True, resize=resize, road=road)
     key_count = {}
     masks = []
     for label in labels:
@@ -170,7 +196,7 @@ def stack_mask(id, data,resize:tuple=None,dir=LBL_DIR):
     masks = np.stack(masks, axis=-1)
     return masks
 
-def generate_ious(labels, masks,sidewalk_lbl=8, IOU_THRESHOLD=0):
+def generate_ious(labels, masks,sidewalk_lbl=8, IOU_THRESHOLD=0.001, road_lbl=None):
     '''
     Generates the ious for all the segmentations against all instances 
     of sidewalk masks.
@@ -178,19 +204,33 @@ def generate_ious(labels, masks,sidewalk_lbl=8, IOU_THRESHOLD=0):
     Returns dictionary of format {label_index: (label_index, ious_score)}
     '''
     sidewalk_idx = np.where(labels==sidewalk_lbl)[0]
-    # sidewalk_masks = masks[:,:, sidewalk_idx]
+    if road_lbl:
+        road_idx = np.where(labels==road_lbl)[0]
 
     all_labels = np.unique(labels)
     ious = {}
 
     for label in all_labels:
+        # ignore calculating sidewalks and raods
         if label == sidewalk_lbl: continue
+        if road_lbl and label==road_lbl: continue
+
         for sidewalk in sidewalk_idx:
             sidewalk_mask = masks[:,:,sidewalk]
             non_sidewalk = np.where(labels==label)[0]
             for i in non_sidewalk:
                 iou = jaccard_score(sidewalk_mask, masks[:,:,i],average='micro',zero_division={0.0, 1.0})
-                if iou > IOU_THRESHOLD:
+                
+                # if IOU(car, road)>0: ignore this car
+                if road_lbl and labels[i]==26:
+                    for road in road_idx:
+                        road_mask = masks[:,:,road]
+                        iou = jaccard_score(road_mask, masks[:,:,i],average='micro',zero_division={0.0, 1.0})
+                        # print(i,iou)
+                        if iou>0:
+                            iou =0
+
+                if iou >= IOU_THRESHOLD:
                     if i not in ious:
                         ious[i] = (sidewalk, iou)
                     else:
@@ -212,3 +252,6 @@ def generate_captions_obstructed(labels, ious, labels_dict=inv_keeplabels):
         captions.append(tmp)
     return captions
         
+
+def generate_obstruction_from_IOUS():
+    pass

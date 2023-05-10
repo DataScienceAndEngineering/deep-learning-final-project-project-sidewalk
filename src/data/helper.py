@@ -154,27 +154,6 @@ def draw_flat_mask(img, polygons):
         else:
             draw_instance_Mask(img, poly)
 
-<<<<<<< HEAD
-# def create_mask(id, data,resize:tuple=None,dir=LBL_DIR):
-#     labels = data[id]
-#     im_dim,polygons = parse_json(dir+f'/{id}.json', return_labels=True, int_labels=True, resize=resize)
-#     key_count = {}
-#     masks = []
-#     for label in labels:
-#         if label not in key_count:
-#             key_count[label]=0
-#         count = key_count[label]
-#         mask = polygons[label][count]
-#         img = np.zeros(im_dim, dtype=np.uint8)
-#         draw_instance_Mask(img,mask)
-#         masks.append(img)
-#         key_count[label]+=1
-    
-#     masks = np.stack(masks, axis=-1)
-#     return masks
-=======
->>>>>>> nancysea
-
 def create_mask(path_to_mask, labels,resize:tuple=None):
     im_dim,polygons = parse_json(path_to_mask, 
                                  return_labels=True, 
