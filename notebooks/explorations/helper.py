@@ -125,10 +125,8 @@ def parse_json(filename: str, keep=keeplabels, return_labels = False, int_labels
             dim = resize
         objects = data["objects"]
         for i in objects:
-            # print(i['label'])
             lab = i['label']
             if lab in keep:
-
                 poly_coords = i['polygon']
                 tmp = list(zip(*poly_coords))
                 y,x = np.array(tmp[0]), np.array(tmp[1])
@@ -177,6 +175,26 @@ def draw_flat_mask(img, polygons):
                 draw_instance_Mask(img, p)
         else:
             draw_instance_Mask(img, poly)
+def create_mask(path_to_mask, labels,resize:tuple=None):
+    
+    im_dim,polygons = parse_json(path_to_mask, 
+                                 return_labels=True, 
+                                 int_labels=True, 
+                                 resize=resize)
+    key_count = {}
+    masks = []
+    for label in labels:
+        if label not in key_count:
+            key_count[label]=0
+        count = key_count[label]
+        mask = polygons[label][count]
+        img = np.zeros(im_dim, dtype=np.uint8)
+        draw_instance_Mask(img,mask)
+        masks.append(img)
+        key_count[label]+=1
+    
+    masks = np.stack(masks, axis=-1)
+    return masks
 
 def stack_mask(id, data,resize:tuple=None,dir=LBL_DIR, road=False):
     labels = data[id]
@@ -238,7 +256,7 @@ def generate_ious(labels, masks,sidewalk_lbl=8, IOU_THRESHOLD=0.001, road_lbl=No
                             ious[i] = (sidewalk,iou)
     return ious
 
-def generate_captions_obstructed(labels, ious, labels_dict=inv_keeplabels):
+def generate_captions_obstructed(labels, ious, obs_labels=None, labels_dict=inv_keeplabels, IOU_THRESHOLD = 0.002):
     '''
     Caption generation for easy viewing of obstruction
     '''
@@ -248,7 +266,8 @@ def generate_captions_obstructed(labels, ious, labels_dict=inv_keeplabels):
         if i in ious: 
             tmp += f'{i} {labels_dict[labels[i]]}'
             sidewalk, iou = ious[i]
-            tmp += f'({sidewalk}) {round(iou,3)}'
+            if iou>=IOU_THRESHOLD:
+                tmp += f'({sidewalk}) {round(iou,3)}'
         captions.append(tmp)
     return captions
         
