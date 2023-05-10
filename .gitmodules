@@ -1,0 +1,3 @@
+[submodule "models/maskrcnn"]
+	path = models/maskrcnn
+	url = git@github.com:socheatos/Mask_RCNN.git
