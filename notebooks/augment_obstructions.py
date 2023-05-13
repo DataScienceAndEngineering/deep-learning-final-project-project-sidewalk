@@ -58,7 +58,8 @@ def locate_dest(img, img_map):
         k+=1
     largest = sidewalks[np.argwhere(idx_sums == np.max(idx_sums))[0][0]]
     x, y = np.where(largest)
-    median_location = np.median(np.column_stack((y,x)),axis=0)
+    #median_location = np.median(np.column_stack((y,x)),axis=0)
+    median_location = [np.median(np.unique(y)), np.median(np.unique(x))]
     return (median_location[1],median_location[0])
 
 def paste(base, img, destination):
