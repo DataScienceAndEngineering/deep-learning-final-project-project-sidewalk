@@ -11,15 +11,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import random
+import string
 
 class augmenter:
     
     def json2img(self,file):
         return file.replace('_gtFine_polygons.json', '_leftImg8bit.png')
              
-    def __init__(self, image_path, json_path):
+    def __init__(self, image_path, json_path, out_path):
         self.image_path = image_path
         self.json_path = json_path
+        self.out_path = out_path
+        
+        if not os.path.isdir(self.out_path):
+            os.mkdir(self.out_path)
+        if not os.path.isdir(self.out_path+'images/'):
+            os.mkdir(self.out_path+'images/')
+        if not os.path.isdir(self.out_path+'json/'):
+            os.mkdir(self.out_path+'json/')
+
+
         self.label_keep = {
             'sidewalk': 8,
             'pole': 17,
@@ -28,6 +39,8 @@ class augmenter:
             }
         self.image_files = os.listdir(self.image_path)
         self.json_files = os.listdir(self.json_path)
+        self.label = 'car'
+        self.thresh = 12000
         self.new()
         
     def build_masks(self):
@@ -35,31 +48,50 @@ class augmenter:
         self.masks = Image.new('L', (self.instance_data['imgWidth'], self.instance_data['imgHeight']), 0)
         self.map = {}
         j=1
+        self.reduced_instance = list()
         for i in self.instance_data['objects']:
             if i['label'] in self.label_keep.keys():
+                self.reduced_instance.append(i)
                 polygon = i['polygon']
                 xy = [(p[0], p[1]) for p in polygon]
                 ImageDraw.Draw(self.masks).polygon(xy,fill=j)
                 self.map[j] = i['label']
                 j+=1
-
-    def isolate_mask(self, label='car', thresh=12000):
+                
+    def update_label(self, label):
+        self.label = label
+        self.isolate_mask()
+        self.crop()
+        self.paste()
+        self.preview()
+        
+    def update_thresh(self, thresh):
+        self.thresh = thresh
+        self.isolate_mask()
+        self.crop()
+        self.paste()
+        self.preview()
+        
+    def isolate_mask(self):
         #Isolates a mask of label object over a provided threshold size
         k = 0
         extracted = np.empty((np.array(self.masks).shape[0], np.array(self.masks).shape[1], 3))
         self.all_extracted = list()
+        self.instance = list()
         np_image = np.array(self.image).astype(int)
         for i in self.map.values():
-            if i == label:
+            if i == self.label:
                 idx = (np.array(self.masks)==list(self.map.keys())[k])
-                if idx.sum() > thresh:
+                if idx.sum() > self.thresh:
+                    self.instance.append(self.reduced_instance[k])
                     extracted = np.empty((np.array(self.masks).shape[0], np.array(self.masks).shape[1], 3)).astype(int)
                     extracted[idx] = np_image[idx]
                     self.all_extracted.append(extracted.astype(int))
             k+=1
-        self.active_extraction = self.all_extracted[self.index]
         if len(self.all_extracted) == 0:
-            raise Exception(f"No mask for {label} found over threshold of {thresh}")
+            raise Exception(f"No mask for {self.label} found over threshold of {self.thresh}")
+        self.active_extraction = self.all_extracted[self.index]
+
             
     def forward(self):
         #Next extracted object
@@ -150,6 +182,49 @@ class augmenter:
         plt.imshow(self.output)
         plt.axis('off')
         
+    def append_json(self):
+        orig_def = self.instance[self.index]
+        distance = (np.median(np.argwhere(self.new_mask !=0), axis=0) -np.median(np.argwhere(self.active_extraction != 0), axis=0))[:-1]
+        distance = [int(distance[1]), int(distance[0])]
+        print(distance)
+        size = [2048, 1024]
+        self.new_def = {
+            'label': self.label,
+            'polygon': list() 
+            }
+        for i in orig_def['polygon']:
+            for j in [0, 1]:
+                if i[j] + distance[j] < 0:
+                    i[j] = 0
+                elif i[j] + distance[j] > size[j]:
+                    i[j] = int(size[j])
+                else:
+                   i[j] += int(distance[j])
+            self.new_def['polygon'].append(i)
+        self.instance_data['objects'].append(self.new_def)
+        
+    def test_newjson(self):
+        polygon = self.new_def['polygon']
+        xy = [(p[0], p[1]) for p in polygon]
+        new = Image.new('L', (tool.instance_data['imgWidth'], tool.instance_data['imgHeight']), 0)
+        ImageDraw.Draw(new).polygon(xy,fill=1)
+        plt.imshow(new)
+            
+    def save(self):
+        output_image = Image.fromarray(self.output)
+        d = ''
+        for i in range(0,17):
+            d += str(random.randint(0,9))
+        name ='aug_' + d + '_leftImg8bit.png'
+        output_image.save(self.out_path+'images/'+name)
+        name = 'aug_' + d + '_gtFine_polygons.json'
+        self.append_json()
+        with open(self.out_path+'json/'+name, "w") as outfile:
+            json.dump(self.instance_data, outfile)
+        self.new()
+        
+
 json_path = '/home/nicholas/Documents/Project_Sidewalk/Project_Sidewalk/json/train/'
 img_path = '/home/nicholas/Documents/Project_Sidewalk/Project_Sidewalk/images_RAW/train/'
-tool = augmenter(img_path, json_path)
+out_path = '/home/nicholas/Documents/Project_Sidewalk/Project_Sidewalk/augmented/'
+tool = augmenter(img_path, json_path, out_path)
