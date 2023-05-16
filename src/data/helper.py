@@ -154,7 +154,7 @@ def draw_flat_mask(img, polygons):
         else:
             draw_instance_Mask(img, poly)
 
-def create_mask(path_to_mask, labels,resize:tuple=None):
+def create_mask(path_to_mask, labels, resize:tuple=None, tmp_mapping=None):
     im_dim,polygons = parse_json(path_to_mask, 
                                  return_labels=True, 
                                  int_labels=True, 
@@ -162,6 +162,8 @@ def create_mask(path_to_mask, labels,resize:tuple=None):
     key_count = {}
     masks = []
     for label in labels:
+        if tmp_mapping: 
+            label = tmp_mapping[label]
         if label not in key_count:
             key_count[label]=0
         count = key_count[label]
