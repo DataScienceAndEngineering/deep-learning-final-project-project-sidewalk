@@ -224,7 +224,7 @@ class augmenter:
         self.new()
         
 
-json_path = '/home/nicholas/Documents/Project_Sidewalk/Project_Sidewalk/json/train/'
-img_path = '/home/nicholas/Documents/Project_Sidewalk/Project_Sidewalk/images_RAW/train/'
-out_path = '/home/nicholas/Documents/Project_Sidewalk/Project_Sidewalk/augmented/'
-tool = augmenter(img_path, json_path, out_path)
+# json_path = '/home/nicholas/Documents/Project_Sidewalk/Project_Sidewalk/json/train/'
+# img_path = '/home/nicholas/Documents/Project_Sidewalk/Project_Sidewalk/images_RAW/train/'
+# out_path = '/home/nicholas/Documents/Project_Sidewalk/Project_Sidewalk/augmented/'
+# tool = augmenter(img_path, json_path, out_path)

@@ -1,3 +1,4 @@
+# note removed polegroup from keep labels
 import os, shutil,sys
 import pandas as pd
 import numpy as np 
@@ -19,7 +20,6 @@ keeplabels ={'sidewalk':8,
             'fence':13,
             'guard rail':14,
             'pole':17,
-            'polegroup':18,
             'vegetation': 21,
             'car':26,
             'bicycle':33}
@@ -31,7 +31,6 @@ inv_keeplabels =  {
     13: 'fence',
     14: 'guard rail',
     17: 'pole',
-    18:  'polegroup',
     21: 'vegetation',
     26: 'car',
     33: 'bicycle'}
@@ -175,8 +174,8 @@ def draw_flat_mask(img, polygons):
                 draw_instance_Mask(img, p)
         else:
             draw_instance_Mask(img, poly)
-def create_mask(path_to_mask, labels,resize:tuple=None):
-    
+            
+def create_mask(path_to_mask, labels, resize:tuple=None, tmp_mapping=None):
     im_dim,polygons = parse_json(path_to_mask, 
                                  return_labels=True, 
                                  int_labels=True, 
@@ -184,6 +183,8 @@ def create_mask(path_to_mask, labels,resize:tuple=None):
     key_count = {}
     masks = []
     for label in labels:
+        if tmp_mapping: 
+            label = tmp_mapping[label]
         if label not in key_count:
             key_count[label]=0
         count = key_count[label]
@@ -272,5 +273,17 @@ def generate_captions_obstructed(labels, ious, obs_labels=None, labels_dict=inv_
     return captions
         
 
-def generate_obstruction_from_IOUS():
-    pass
+def get_obstruction_idx(inputs,THRES = .5):
+    idx = None
+    if isinstance(inputs[0],str):
+        idx = [i for i,c in enumerate(inputs) if c!='']
+    else:
+        idx = [i for i,c in enumerate(inputs) if c>THRES]
+    return idx
+
+def filter_obstructions(idx,bboxs,masks, labels):
+    bboxs = bboxs[idx]
+    masks = masks[:,:,idx]
+    labels =  labels[idx]
+    return bboxs, masks, labels
+
