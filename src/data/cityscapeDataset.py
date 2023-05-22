@@ -55,8 +55,8 @@ class CityscapeDataset(Dataset):
       self.add_image(source='cityscape',
                      image_id = ID,
                      path = img_path,
-                     labels = img_labels,
-                     obstruction = obs_labels)
+                     labels = img_labels.astype(np.int32),
+                     obstruction = obs_labels.astype(np.int32))
       
   def load_mask(self,id):
     # if not isinstance(id, str):
@@ -67,7 +67,7 @@ class CityscapeDataset(Dataset):
     mask_path = os.path.join(os.path.dirname(os.path.dirname(img_info['path']))
                         ,'segmentations',f'{img_name}.json')
 
-    masks = helper.create_mask(mask_path, img_info['labels'], tmp_mapping=self.rev_mapping)
+    masks = helper.create_mask(mask_path, img_info['labels'], tmp_mapping=self.rev_mapping).astype(bool)
     return masks, img_info['labels'], img_info['obstruction']
   
   def image_reference(self, id):
