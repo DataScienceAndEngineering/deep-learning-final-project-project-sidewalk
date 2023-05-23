@@ -5,6 +5,11 @@ Final Project for CSCI19109-S23
 
 We are performing image segmentation on street view images to extract sidewalk location and information.  We then hope to allow the system to assess the accessibility of the sidewalks and check for obstructions or deterioration.
 
+Read our project report [here](/docs/Project_Sidewalk_Report.ipynb).
+
+You can find the sample usage to train and run inference of the model [here](notebooks/explorations/maskrcnn_demo.ipynb)
+*You will first have to download the [images](https://drive.google.com/drive/folders/1zDr-Mbyi1xfLLS5Yb7ASAj9JSq2C5xDo?usp=sharing), [annotations](https://drive.google.com/drive/folders/1v48Wv8Wjl2TtHZR-Pll3x5FxrqT1JUcf?usp=drive_link), and [weights](https://drive.google.com/file/d/10qTvs6lsEsfWB0uYWw5HeXMrHRWBszIn/view?usp=sharing) and place them in data/processed before running*
+
 Project Organization
 ------------
 
