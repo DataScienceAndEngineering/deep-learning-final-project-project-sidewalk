@@ -26,12 +26,11 @@ Successful implementation of our proposed model would allow for automated determ
 We utilized the CityScapes Dataset for this model (Cordts et al., 2016). This dataset comprises over 5k images collected by dashcam while driving around 50 German cities. This dataset is extensive; however, we only needed a subset of data, notably images containing sidewalks. After isolating and processing the data based on the sidewalk label in the semantic mask, we were left with slightly over 3k samples. Each sample included an image, a semantic segmentation mask for each object class, and a JSON file detailing polygon coordinates and class for each occurrence of an object within the image (instanced segmentation). After extraction, we applied a custom train/test/val split, allocating 10% of the data for validation and testing, with the remaining 80% utilized for training.
 
 To allow for training of the obstruction classifier, we constructed an augmented dataset, algorithmically determining obstructions utilizing intersection over union (IOU) to score the prevalence of the object within the sidewalk boundary. Special attention was paid to cars intersecting with the sidewalk, and any overlap with the street removed it as a possible obstruction, as it is likely the car is simply parked or driving adjacent to the vehicle collecting the images. This dataset includes 115,567 samples, each denoting a single object within an image. ~84k objects were deemed non-obstructions, while the remaining ~32k was established as significant sidewalk obstructions. Images were randomly sampled, and obstructions were visually verified to ensure the dataset was constructed as expected.
+The final obstruction dataset contained only 10 out of the 30 classes of the original dataset. From random sampling and manual inspection, we conclude that the classes in the figure below were the most common obstructions a pedestrian could encounter. 
 
+![](../reports/figures/segmentation_histogram.png)
 
-
-
-
-
+![](../reports/figures/obstruction_segmentation_hist.png)
 
 The obstruction dataset contained a class imbalance, with 72% of objects deemed non-obstructions. We attempted to augment our dataset with synthetic data to alleviate this disparity. However, our constructed augmenter only placed a single object on the sidewalk as an obstruction. While this assisted with producing images containing obstructions, it did not help to alleviate the imbalance of object instances. To solve this, we would need to expand the augmenter to place additional objects, which is not feasible given the relatively small size of the sidewalk regions in most images used.
 
@@ -63,7 +62,45 @@ For example, the main portions of the MaskRCNN structure we are interested in ar
 
 This process was rather complex as model training performance needed to be finetuned to make up for class imbalances, but also, the architecture required refinement to ensure proper learning without purely memorizing the training data.  To this end, we explored multiple options for the loss function and the number and size of dense layers in the obstruction classification section.  We utilized Focal Binary Cross Entropy (Lin et al., 2017), Weighted Binary Cross Entropy, and Binary Cross Entropy for obstruction loss functions.  We explored dense layers ranging from 2 layers with 11 and 1 nodes to 4 layers with 64, 32, 16, and 1 nodes.  Due to the long time required for training, not all attempts completed a full 20 epochs (~12 hours).  For consistency of evaluation, we limit our analysis to models that completed a full 20-epoch training session.
 
+The first model which we will call ‘Simple_Dense’ that  we choose to evaluate follows the structure of the MaskRCNN classifier head. This model has one Dense layer with two nodes - for classifying 0: non-obstructions and 1: obstructions. We call this portion of the network, the obstruction head. As the classifier head calculates the loss using the categorical cross entropy, the obstruction head utilizes binary cross entropy to propagate its losses. 
+
 # **Evaluation**
+Our modified MaskRCNN generates multiple outputs for each instance, the predicted bounding boxes, masks, class ids, class confidence, obstruction label, obstruction confidence. This creates a challenge to evaluate the performance of the model, leaving us to combine object detection metrics and semantic segmentation metric in hopes of giving us a comprehensive insight to how the model is performing. As explained in the above ‘Method’ section, we had made various changes to the network for the purpose of detecting and segmenting multi-label and multi-class instances. In this section, we will present the performance of models that has achieved training of 20 epochs.
+
+The initial challenge is matching the predictions to their ground truth labels. We do this by calculating the IoUs of all the instances of masks and instances of ground truth with one another. If the IoUs are above a certain threshold, we accept the pair as a candidate groundtruth, prediction pair. However, ultimately the ground truth label will be matched to the prediction with the highest IoU. 
+## DICE-Coefficient
+Instance and semantic segmentations has become a popular research field which builds upon the object classification and detection tasks. The DICE coefficient is a statistical measure used to calculate the similarity and overlap of two binary objects. However, the metric does not take into account the class labels but rather just the binary masks itself.
+$$\text{Dice coefficient} = \frac{{2 \times \text{intersection}}}{{\text{sum of set A} + \text{sum of set B}}}$$
+
+This is perfectly suited to check how well our model is doing on the mask generation task. As described above, the ground truth and prediction pair that have the highest IoU are chosen and their DICE coefficient calculated. The performance of the entire test dataset is summarized below. Each column has a different IoU threshold to filter labels and predictions pairs:
+
+|          |IOU@0.1                 | IOU@0.25                  | IOU@0.5                 | IOU@0.7                  |
+|----------|--------------------------|--------------------------|--------------------------|--------------------------|
+| Simple_Dense | 	 0.08048      |  0.07890      | 0.02687     | 0.00878     |
+| Model 2 |        0.03794           | 0.031854      |    0.009727           |                 0.0        |
+
+As predicted for both models, the higher the IoU threshold, the smaller the score becomes as the threshold filters out the majority of low IoU labels. Simple_Dense however, performed slightly better.
+## Precision/Recall
+Precision and Recall is one of the most commonly used metrics for classification tasks. Since our project hopes to detect both binary and multi-class objects, we decided that we will also be using these metrics to evaluate and compare the performance between our models. Similarly to the DICE metric, we evaluate the detection with the matched ground truth bounding box to the predicted bounding box of the same threshold range $(0.1,0.25,0.5,0.7)$. 
+
+<p align="center">
+  <img src="../reports/figures/epoch10_precision_recall_iou0_1.png" width="45%">
+&nbsp; &nbsp; &nbsp; &nbsp;
+  <img src="../reports/figures/epoch10_precision_recall_iou0_25.png" width="45%">
+</p>
+
+<p align="center">
+  <img src="../reports/figures/epoch10_precision_recall_iou0_5.png" width="45%">
+&nbsp; &nbsp; &nbsp; &nbsp;
+  <img src="../reports/figures/epoch10_precision_recall_iou0_7.png" width="45%">
+</p>
+
+
+Perhaps due to the nature of the imbalanced multi-class data, the network was only able to detect the six of the ten labels even at the lowest IoU threshold, this can be shown in the classification report below. 
+
+![](../reports/figures/epoch_10_multi_class_iou10.png)
+
+
 
 
 
