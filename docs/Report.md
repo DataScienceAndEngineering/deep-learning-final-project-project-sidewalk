@@ -72,7 +72,7 @@ For example, the main portions of the MaskRCNN structure we are interested in ar
 
 This process was rather complex as model training performance needed to be finetuned to make up for class imbalances, but also, the architecture required refinement to ensure proper learning without purely memorizing the training data.  To this end, we explored multiple options for the loss function and the number and size of dense layers in the obstruction classification section.  We utilized Focal Binary Cross Entropy (Lin et al., 2017), Weighted Binary Cross Entropy, and Binary Cross Entropy for obstruction loss functions.  We explored dense layers ranging from 2 layers with 11 and 1 nodes to 4 layers with 64, 32, 16, and 1 nodes.  Due to the long time required for training, not all attempts completed a full 20 epochs (~12 hours).  For consistency of evaluation, we limit our analysis to models that completed a full 20-epoch training session.
 
-The first model which we will call ‘Simple_Dense’ that  we choose to evaluate follows the structure of the MaskRCNN classifier head. This model has one Dense layer with two nodes - for classifying 0: non-obstructions and 1: obstructions. We call this portion of the network the obstruction head. As the classifier head calculates the loss using the categorical cross entropy, the obstruction head utilizes binary cross entropy to propagate its losses. We expanded upon this model, adding additional complexity through three additional dense layers.  All four dense layers had the following number of nodes: 64, 32, 16, and 1.  We expected for this initial expanded model to overtrain significantly, which would inform us the task is obtaininable, and the network could be simplified to increase validation performance.
+The first model which we will call `Simple_Dense` that  we choose to evaluate follows the structure of the MaskRCNN classifier head. This model has one Dense layer with two nodes - for classifying 0: non-obstructions and 1: obstructions. We call this portion of the network the obstruction head. As the classifier head calculates the loss using the categorical cross entropy, the obstruction head utilizes binary cross entropy to propagate its losses. We expanded upon this model, adding additional complexity through three additional dense layers, we call this second model `Shared_Dense`.  All four dense layers had the following number of nodes: 64, 32, 16, and 1.  We expected for this initial expanded model to overtrain significantly, which would inform us the task is obtaininable, and the network could be simplified to increase validation performance.
 
 # **Evaluation**
 Deep learning models can quickly achieve a very good result in the field of image segmentation, object detection and image classification using GPU. An alternative way to achieve a good result without GPU is random forest, since it is known to perform great with large datasets like images.  For our baseline model we have trained 3 models for image segmentation, object classification and obstruction classification.  After a lot of preprocessing and hyper tuning our model, it achieved a very low dice score for segmentation.  Our baseline segmentation model achieved a 7.7% dice score with 17% precision and only 5% recall rate.
@@ -97,12 +97,12 @@ This is perfectly suited to check how well our model is doing on the mask genera
 
 |          |IOU@0.1                 | IOU@0.25                  | IOU@0.5                 | IOU@0.7                  |
 |----------|--------------------------|--------------------------|--------------------------|--------------------------|
-| Simple_Dense | 	 0.08048      |  0.07890      | 0.02687     | 0.00878     |
-| Model 2 |        0.03794           | 0.031854      |    0.009727           |                 0.0        |
+| `Simple_Dense` | 	 0.08048      |  0.07890      | 0.02687     | 0.00878     |
+| `Shared_Dense` |        0.03794           | 0.031854      |    0.009727           |                 0.0        |
 
 As predicted for both models, the higher the IoU threshold, the smaller the score becomes as the threshold filters out the majority of low IoU labels. Simple_Dense however, performed slightly better.
 ## Precision/Recall
-Precision and Recall is one of the most commonly used metrics for classification tasks. Since our project hopes to detect both binary and multi-class objects, we decided that we will also be using these metrics to evaluate and compare the performance between our models. Similarly to the DICE metric, we evaluate the detection with the matched ground truth bounding box to the predicted bounding box of the same threshold range $(0.1,0.25,0.5,0.7)$. 
+Precision and Recall is one of the most commonly used metrics for classification tasks. Since our project hopes to detect both binary and multi-class objects, we decided that we will also be using these metrics to evaluate and compare the performance between our models. Similarly to the DICE metric, we evaluate the detection with the matched ground truth bounding box to the predicted bounding box of the same threshold range $(0.1,0.25,0.5,0.7)$. We used the `sk-learn.metrics.classification_report` function to evaluate the results of the labels that *are* detected.
 
 <p align="center">
   <img src="../reports/figures/epoch10_precision_recall_iou0_1.png" width="45%">
@@ -117,12 +117,13 @@ Precision and Recall is one of the most commonly used metrics for classification
 </p>
 
 
-Perhaps due to the nature of the imbalanced multi-class data, the network was only able to detect the six of the ten labels even at the lowest IoU threshold, this can be shown in the classification report below. 
+Perhaps due to the nature of the imbalanced multi-class data, the network was only able to detect the six of the ten labels even at the lowest IoU threshold, this can be shown in the classification report below. Moreover, the `Shared_Dense` model performed poorly in evaluation of the testing dataset, as mentioned in the model description, it overtrained significantly and could not detect any obstructions from the dataset it did not see before hence the lack of classification breakdown for this model.
 
 ![](../reports/figures/epoch_10_multi_class_iou10.png)
 
+
 # **Conclusion**
-In conclusion, our deep learning model can identify obstructions on sidewalks with an accuracy of 42%. However, due to the imbalanced nature of our multi-class dataset, our system encountered challenges in detecting fences and bicycles, leading to their absence in the classification results. Furthermore, our model exhibited good performance in accurately classifying sidewalks, poles, and vegetation, with a recall rate of only 22%.
+In conclusion, our deep learning model can best identify obstructions on sidewalks with an accuracy of 42% at the IoU=0.10. However, due to the imbalanced nature of our multi-class dataset, our system encountered challenges in detecting fences and bicycles, leading to their absence in the classification results. Furthermore, our model exhibited good performance in accurately classifying sidewalks, poles, and vegetation, with a recall rate of only 22%.
  
  
 Most errors in our system can be attributed to the imbalanced distribution of the data and the poor quality of dash camera images, which often appear fuzzy and unclear. To enhance the classification of sidewalk accessibility, it is imperative to address these challenges. This can be accomplished by acquiring a more balanced dataset that includes a sufficient representation of fence and bicycle instances, as well as obtaining higher-quality sidewalk images instead of relying solely on dash camera images.
@@ -137,7 +138,7 @@ By addressing the data imbalance issue and improving the quality of sidewalk ima
 ### Nancy (socheatos)
   - Generated obstruction dataset, dataloader
   - Upgraded MaskRCNN TF1.x -> 2.x
-  - Modified / trained architecture
+  - Modified / trained architecture (most of architecture commits can be found in this [fork](https://github.com/socheatos/Mask_RCNN)
 ### Rabiul (rabiulh1050)
   - Feature extraction and Image processing
   - Basemodel:
