@@ -130,7 +130,10 @@ Perhaps due to the nature of the imbalanced multi-class data, the network was on
   - Modified / trained architecture
 ### Rabiul
   - Feature extraction and Image processing
-  - RandomForest
+  - Basemodel:
+    - image segmentation
+    - object classification
+    - obstraction classification
   - SAM & YOLO 
 ### Nick
   - Data pre-processing
