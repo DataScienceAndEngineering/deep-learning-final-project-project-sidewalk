@@ -53,7 +53,8 @@ We utilized GridSearchCV to tune random forest hyperparameters. Model starts to 
 ## Sidewalk Segmentation
 Our first goal was to produce a network capable of automatically constructing semantic segmentations of sidewalk areas. We utilized a simple U-Net architecture containing four down-convolution and four up-convolution blocks for a total of 12 convolutional layers. We compared this task directly to a baseline model, Random Forest.  
 
-This task was the simplest of our goals, and producing semantic segmentation is relatively straightforward, given we are utilizing the correct architecture. The U-net was trained for 100 epochs, with an early stop scheduled for when the model fails to improve throughout 15 epochs.  At that point, the best-performing model on the validation data was preserved and analyzed for performance.  Due to this being a precursor for object segmentation, whereas trained convolutional filters may be of use, we decided not to expose this model to the test dataset.  The model was trained utilizing 1-dice as the loss function.
+This task was the simplest of our goals, and producing semantic segmentation is relatively straightforward, given we are utilizing the correct architecture. The U-net was trained for 100 epochs, with an early stop scheduled for when the model fails to improve throughout 15 epochs.  At that point, the best-performing model on the validation data was preserved and analyzed for performance. In our trained model (displayed training curve below), the model ended early preserving epoch 66 as the best performing model. Due to this being a precursor for object segmentation, whereas trained convolutional filters may be utilized in later models, we decided not to expose this model to the test dataset.  The model was trained utilizing a dice score purposed for trainining reduction as the loss function.
+$$loss = 1-dice$$
 
 ![](../models/UNet/single_class/Training_curves.png)
 
