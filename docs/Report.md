@@ -123,8 +123,10 @@ Perhaps due to the nature of the imbalanced multi-class data, the network was on
 # **Conclusion**
 In conclusion, our deep learning model can identify obstructions on sidewalks with an accuracy of 42%. However, due to the imbalanced nature of our multi-class dataset, our system encountered challenges in detecting fences and bicycles, leading to their absence in the classification results. Furthermore, our model exhibited good performance in accurately classifying sidewalks, poles, and vegetation, with a recall rate of only 22%.
  
+ 
 Most errors in our system can be attributed to the imbalanced distribution of the data and the poor quality of dash camera images, which often appear fuzzy and unclear. To enhance the classification of sidewalk accessibility, it is imperative to address these challenges. This can be accomplished by acquiring a more balanced dataset that includes a sufficient representation of fence and bicycle instances, as well as obtaining higher-quality sidewalk images instead of relying solely on dash camera images.
  
+ 
 By addressing the data imbalance issue and improving the quality of sidewalk images, we anticipate significant improvements in the accuracy and reliability of our model's classification of sidewalk accessibility. Out model has the potential to provide valuable information to municipalities for sidewalk maintenance and accessibility improvements. Additionally, it can assist visually impaired individuals in navigating sidewalks and help them plan accessible routes, ultimately enhancing their mobility and independence. 
 
 
