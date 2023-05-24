@@ -123,19 +123,20 @@ Perhaps due to the nature of the imbalanced multi-class data, the network was on
 # **Conclusion**
 
 # **Contributions**
+![](../reports/figures/Commit_graphs.png)
 
-### Nancy
+### Nancy (socheatos)
   - Generated obstruction dataset, dataloader
   - Upgraded MaskRCNN TF1.x -> 2.x
   - Modified / trained architecture
-### Rabiul
+### Rabiul (rabiulh1050)
   - Feature extraction and Image processing
   - Basemodel:
     - image segmentation
     - object classification
     - obstraction classification
   - SAM & YOLO 
-### Nick
+### Nick (NicholasLeotta99)
   - Data pre-processing
   - UNet Architecture and training
   - SAM tensorflow conversion
