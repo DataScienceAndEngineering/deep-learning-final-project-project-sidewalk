@@ -5,7 +5,7 @@ This work aims to develop a system capable of quickly determining the level of a
 We explored multiple methodologies to obtain segmentations; MaskRCNN, UNet, SAM (Segment Anything Model), with Random Forest operating as a baseline. The MaskRCNN model was the best choice, as it can produce instanced segmentations while determining the class of the segmented object. The MaskRCNN model is built on FPN and ResNet101 and is pre-trained on the MS COCO dataset, producing instanced segmentations for everyday objects. By adding dense layers for classification, we attempted to train the model to utilize the segmentations to predict observed sidewalk obstruction.
 
 # **Introduction**
-The inspiration for this work is Project Sidewalk from The University of Washington. The University of Washington project aims to collect a dataset containing all locations and timestamps for sidewalk obstructions and accessibility items. They plan to utilize this data for machine learning, but their public APIs only provide access to the location information of identified obstacles and objects. We plan to expand upon this idea and create a system capable of automatically determining obstructions present on a sidewalk from simple images or video frames.
+The inspiration for this work is Project Sidewalk from The University of Washington. The University of Washington project aims to collect a dataset containing all locations and timestamps for sidewalk obstructions and accessibility items. They plan to utilize this data for machine learning, but their public APIs only provide access to the location information of identified obstacles and objects. We plan to expand upon this idea and create a system capable of automatically determining obstructions present on a sidewalk from simple images or video frames. Our model can be utilized by local municipalities to understand the current condition of city sidewalks and improve them.
 
 To simplify our research, we identified three tasks we must address. The first step was obtaining a segmented sidewalk region within an image. The second was to obtain segmentations of objects which would compose common sidewalk obstructions. The final step was to, utilizing the location and object type, determine the likelihood of each object constituting a suitable obstruction. We utilized Random Forest to obtain sidewalk segmentations from the input image to compare our model to a baseline prediction. We did not compose baseline predictions for total obstruction classification, as this problem is rather complex.
 
@@ -38,8 +38,15 @@ Further processing was performed on these datasets to assist with model explorat
 
 # **Methods**
 ## Baseline
+We have generated a set of 23 image features for each image using techniques such as thresholding, edge detection, blurring, smoothing, and image filters. We utilized random forests feature importance to extract 10 features out of 23 features.
 
+![](../reports/figures/feature_importance.png)
 
+We utilized GridSearchCV to tune random forest hyperparameters. Model starts to overfit when n_estimators> 2000 and max_depth is >5. Best parameters for our modes are n_estimators=2000, criterion=entropy, max_depth=4 , min_samples_leaf=1 .
+
+![](../reports/figures/validationCurve.png)
+
+![](../reports/figures/LearningCurve.png)
 
 
 
@@ -65,6 +72,17 @@ This process was rather complex as model training performance needed to be finet
 The first model which we will call ‘Simple_Dense’ that  we choose to evaluate follows the structure of the MaskRCNN classifier head. This model has one Dense layer with two nodes - for classifying 0: non-obstructions and 1: obstructions. We call this portion of the network, the obstruction head. As the classifier head calculates the loss using the categorical cross entropy, the obstruction head utilizes binary cross entropy to propagate its losses. 
 
 # **Evaluation**
+Deep learning models can quickly achieve a very good result in the field of image segmentation, object detection and image classification using GPU. An alternative way to achieve a good result without GPU is random forest, since it is known to perform great with large datasets like images.  For our baseline model we have trained 3 models for image segmentation, object classification and obstruction classification.  After a lot of preprocessing and hyper tuning our model, it achieved a very low dice score for segmentation.  Our baseline segmentation model achieved a 7.7% dice score with 17% precision and only 5% recall rate.
+
+![](../reports/figures/CR_object_classification.png)
+
+Our object classification model has an accuracy of 76% across all classes. Given that our data is very imbalanced, model was unable to detect any instances of wall or fence.  However, it did very well classifying sidewalk, vegetation, car, and pole. When it comes to bicycles, model did extremely well not labeling other classes as bicycles, however it miss-classified most of the bicycles which can be seen by recall rate of only 6%.
+
+![](../reports/figures/CR_obsraction_classification.png)
+
+![](../reports/figures/ROC_obstruction_classification.png)
+
+
 Our modified MaskRCNN generates multiple outputs for each instance, the predicted bounding boxes, masks, class ids, class confidence, obstruction label, obstruction confidence. This creates a challenge to evaluate the performance of the model, leaving us to combine object detection metrics and semantic segmentation metric in hopes of giving us a comprehensive insight to how the model is performing. As explained in the above ‘Method’ section, we had made various changes to the network for the purpose of detecting and segmenting multi-label and multi-class instances. In this section, we will present the performance of models that has achieved training of 20 epochs.
 
 The initial challenge is matching the predictions to their ground truth labels. We do this by calculating the IoUs of all the instances of masks and instances of ground truth with one another. If the IoUs are above a certain threshold, we accept the pair as a candidate groundtruth, prediction pair. However, ultimately the ground truth label will be matched to the prediction with the highest IoU. 
