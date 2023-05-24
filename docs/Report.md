@@ -124,13 +124,21 @@ Perhaps due to the nature of the imbalanced multi-class data, the network was on
 
 # **Contributions**
 
-
-
-
-
-
-
-
+### Nancy
+  - Generated obstruction dataset, dataloader
+  - Upgraded MaskRCNN TF1.x -> 2.x
+  - Modified / trained architecture
+### Rabiul
+  - Feature extraction and Image processing
+  - RandomForest
+  - SAM & YOLO 
+### Nick
+  - Data pre-processing
+  - UNet Architecture and training
+  - SAM tensorflow conversion
+  - Data augmenter
+  - Model training on GPU
+  - Focal cross entropy implementation
 
 # **References**
 Cordts, M., Omran, M., Ramos, S., Rehfeld, T., Enzweiler, M., Benenson, R., Franke, U., Roth, S., &amp; Schiele, B. (2016). The cityscapes dataset for Semantic Urban Scene understanding. 2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR). https://doi.org/10.1109/cvpr.2016.350 
