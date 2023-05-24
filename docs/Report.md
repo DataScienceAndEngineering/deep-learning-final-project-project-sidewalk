@@ -53,7 +53,9 @@ We utilized GridSearchCV to tune random forest hyperparameters. Model starts to 
 ## Sidewalk Segmentation
 Our first goal was to produce a network capable of automatically constructing semantic segmentations of sidewalk areas. We utilized a simple U-Net architecture containing four down-convolution and four up-convolution blocks for a total of 12 convolutional layers. We compared this task directly to a baseline model, Random Forest.  
 
-This task was the simplest of our goals, and producing semantic segmentation is relatively straightforward, given we are utilizing the correct architecture. The U-net was trained for 100 epochs, with an early stop scheduled for when the model fails to improve throughout 15 epochs.  At that point, the best-performing model on the validation data was preserved and analyzed for performance.  Due to this being a precursor for object segmentation, whereas calculated convolutional filters may be of use, we decided not to expose this model to the test dataset.
+This task was the simplest of our goals, and producing semantic segmentation is relatively straightforward, given we are utilizing the correct architecture. The U-net was trained for 100 epochs, with an early stop scheduled for when the model fails to improve throughout 15 epochs.  At that point, the best-performing model on the validation data was preserved and analyzed for performance.  Due to this being a precursor for object segmentation, whereas trained convolutional filters may be of use, we decided not to expose this model to the test dataset.  The model was trained utilizing 1-dice as the loss function.
+
+![](../models/UNet/single_class/Training_curves.png)
 
 ## Object Segmentation
 The object segmentation task was much more complex.  Initially, we looked into upgrading the U-Net architecture to produce multi-class semantic segmentations. However, we quickly realized that instanced segmentations are required to classify individual objects as obstructions.  U-Nets cannot produce a variable number of instanced segmentations; therefore, we started exploring alternative models.
